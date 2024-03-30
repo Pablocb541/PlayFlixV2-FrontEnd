@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <link rel="stylesheet" href="/styles/register.css">
+</head>
+<body>
+    <h1>Registro de Usuario</h1>
+    <form id="registro-form">
+        <div id="message-container"></div> <!-- Contenedor para los mensajes -->
+        
+        <label for="nombre">Nombre *</label>
+        <input type="text" id="nombre" name="nombre" pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+" title="Solo se permiten letras y espacios" required>
+
+        <label for="apellido">Apellido *</label>
+        <input type="text" id="apellido" name="apellido" pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+" title="Solo se permiten letras y espacios" required>
+
+        <label for="correoElectronico">Correo Electrónico *</label>
+        <input type="email" id="correoElectronico" name="correoElectronico" required>
+
+        <label for="contraseña">Contraseña *</label>
+        <input type="password" id="contraseña" name="contraseña" required>
+
+        <label for="repetirContraseña">Repetir Contraseña *</label>
+        <input type="password" id="repetirContraseña" name="repetirContraseña" required>
+
+        <label for="pin">PIN (6 dígitos) *</label>
+        <input type="text" id="pin" name="pin" pattern="[0-9]{6}" title="El PIN debe tener exactamente 6 dígitos" required>
+
+        <label for="pais">País</label>
+        <input type="text" id="pais" name="pais" pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+" title="Solo se permiten letras y espacios">
+
+        <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
+
+        <button type="submit">Registrarse</button>
+
+        <button onclick="window.location.href='login.html'" class="login-btn">Iniciar Sesión</button>
+    </form>
+
+    <script>
+        // Agregar un evento de escucha para el envío del formulario de registro
+        document.getElementById("registro-form").addEventListener("submit", async function(event) {
+            event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+    
+            // Obtener los datos del formulario
+            const formData = new FormData(this);
+    
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+    
+            try {
+                // Validar el formato del PIN
+                if (!/^\d{6}$/g.test(data.pin)) {
+                    throw new Error('Formato de PIN incorrecto. Debe ser un número de 6 dígitos.');
+                }
+    
+                // Realizar una solicitud POST para registrar un nuevo usuario
+                const response = await fetch("http://localhost:3000/api/registros", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+    
+                // Obtener los datos de la respuesta
+                const responseData = await response.json();
+    
+                // Si el registro fue exitoso
+                if (response.ok) {
+                    // Mostrar una alerta de éxito
+                    showAlert('Registro exitoso', 'alert-success');
+                    // Limpiar los campos del formulario después de enviarlos
+                    document.getElementById("registro-form").reset();
+                } else {
+                    // Mostrar una alerta de error
+                    showAlert(`Error: ${responseData.error}`, 'alert-error');
+                }
+            } catch (error) {
+                // Capturar y manejar errores
+                console.error("Error al registrar usuario:", error);
+                showAlert(`Error al registrar usuario: ${error.message}`, 'alert-error');
+            }
+        });
+    
+        // Función para mostrar una alerta
+        function showAlert(message, className) {
+            // Crear un elemento de alerta
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${className}`;
+            alertDiv.textContent = message;
+    
+            // Obtener el contenedor de mensajes y limpiarlo
+            const messageContainer = document.getElementById("message-container");
+            messageContainer.innerHTML = '';
+            // Agregar la alerta al contenedor de mensajes
+            messageContainer.appendChild(alertDiv);
+            
+            // Desaparecer la alerta después de 5 segundos
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión</title>
+    <link rel="stylesheet" href="/Styles/login.css"> <!-- Se enlaza la hoja de estilos para el diseño -->
+</head>
+<body>
+    <h1>Bienvenido</h1>
+    <div class="container">
+        <h1>Ingresar Pin</h1>
+        <form id="login-form"> <!-- Se crea un formulario con un ID -->
+            <label for="pin">PIN:</label>
+            <input type="text" id="pin" name="pin" required pattern="[0-9]{6}" title="El PIN debe tener exactamente 6 dígitos.">
+            <!-- Se agrega un campo de entrada para el PIN, con validación de longitud y tipo -->
+
+            <button type="submit">Iniciar</button> <!-- Botón para enviar el formulario -->
+        </form>
+        <p id="error-message" style="color: red;"></p> <!-- Se crea un párrafo para mostrar mensajes de error -->
+    </div>
+
+    <script>
+        // Agregar un evento de escucha para el envío del formulario
+        document.getElementById("login-form").addEventListener("submit", async function(event) {
+            event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+
+            // Obtener los datos del formulario
+            const formData = new FormData(this);
+
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            // Validar que el PIN tenga 6 dígitos
+            if (data.pin.length !== 6 || isNaN(data.pin)) {
+                document.getElementById("error-message").innerText = "El PIN debe tener exactamente 6 dígitos.";
+                return;
+            }
+
+            try {
+                // Realizar una solicitud POST para iniciar sesión con el PIN proporcionado
+                const response = await fetch("http://localhost:3000/api/loginUsuarios", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    if (responseData.success) {
+                        window.location.href = "./admin.html"; // Redireccionar si el PIN es correcto
+                    } else {
+                        document.getElementById("error-message").innerText = responseData.error; // Mostrar mensaje de error si el PIN es incorrecto
+                    }
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById("error-message").innerText = errorData.error; // Mostrar mensaje de error si hay un problema con la solicitud
+                }
+            } catch (error) {
+                console.error("Error al iniciar sesión:", error);
+                document.getElementById("error-message").innerText = "Error al iniciar sesión"; // Mostrar mensaje de error genérico si hay un error en la solicitud
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playlist</title>
+  <link rel="stylesheet" href="/styles/videos.css">
+</head>
+<body>
+  <div class="navbar">
+    <a href="login.html" onclick="logout()">Cerrar Sesión</a>
+    <a href="Inicio.html" onclick="backToProfiles()">Perfiles</a>
+  </div>
+
+  <h1>Playlist</h1>
+
+  <!-- Contenedor donde se muestam los videos -->
+  <div id="videoContainer"></div>
+
+  <script>
+    // Clase para extraer y mostrar los videos
+    class YouTubeLinkExtractor {
+      constructor(apiUrl) {
+        this.apiUrl = apiUrl;
+      }
+
+      // Método para obtener los videos del servidor
+      async fetchVideos(userId) {
+        try {
+          const response = await fetch(`${this.apiUrl}?userId=${userId}`); // Envía el ID de usuario como parámetro
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('Error fetching videos:', error);
+          return [];
+        }
+      }
+
+      // Método para renderizar los videos en el contenedor especificado
+      async renderVideos(containerId, userId) {
+        const videos = await this.fetchVideos(userId); // Obtener los videos del servidor
+        const container = document.getElementById(containerId);
+        if (!container) {
+          console.error(`Container element with ID ${containerId} not found.`);
+          return;
+        }
+        container.innerHTML = ''; // Limpiar el contenedor antes de agregar los videos
+
+       
+        for (let i = 0; i < videos.length; i++) {
+          const video = videos[i];
+          const videoId = this.extractVideoId(video.youtubeUrl); // Extraer el ID del video de la URL de YouTube
+          const videoContainer = document.createElement('div');
+          videoContainer.classList.add('video-container');
+
+          // Agregar evento de clic al contenedor de video para reproducirlo
+          videoContainer.addEventListener('click', () => {
+            // Crear un iframe para reproducir el video de YouTube
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
+            iframe.title = 'YouTube video player';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.allowFullscreen = true;
+            videoContainer.innerHTML = ''; // Limpiar el contenedor antes de agregar el iframe
+            videoContainer.appendChild(iframe); // Agregar el iframe al contenedor
+          });
+          
+          // Crear una imagen en miniatura del video
+          const thumbnail = document.createElement('img');
+          thumbnail.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          thumbnail.alt = 'Video Thumbnail';
+          thumbnail.classList.add('video-thumbnail');
+
+          // Crear una superposición con el título del video
+          const overlay = document.createElement('div');
+          overlay.classList.add('video-overlay');
+          overlay.innerHTML = `
+            <div class="video-title">${video.name}</div>
+          `;
+
+          // Agregar la imagen en miniatura y la superposición al contenedor del video
+          videoContainer.appendChild(thumbnail);
+          videoContainer.appendChild(overlay);
+
+          // Agregar el contenedor del video al contenedor principal
+          container.appendChild(videoContainer);
+        }
+      }
+
+      // Método para extraer el ID del video de la URL de YouTube
+      extractVideoId(youtubeUrl) {
+        const url = new URL(youtubeUrl);
+        const videoId = url.searchParams.get('v');
+        return videoId;
+      }
+    }
+
+    // Obtener el ID de usuario del localStorage
+    const userId = localStorage.getItem('userId');
+
+    // Crear una instancia de la clase YouTubeLinkExtractor con la URL del servidor de videos
+    const extractor = new YouTubeLinkExtractor('http://localhost:3000/api/videos');
+    // Renderizar los videos en el contenedor con el ID 'videoContainer'
+    extractor.renderVideos('videoContainer', userId);
+</script>
+
+</body>
+</html>

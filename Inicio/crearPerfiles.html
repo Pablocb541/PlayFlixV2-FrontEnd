@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Perfiles</title>
+  <link rel="stylesheet" href="/styles/perfiles.css">
+  <link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body>
+ 
+<header>
+  <h1>Panel de Administrador</h1>
+  <nav>
+    <ul>
+      <li><a href="Inicio.html">Perfiles</a></li>
+      <li><a href="crearPerfiles.html">Gestión de  Perfiles</a></li>
+      <li><a href="crearVideos.html">Gestión de Videos</a></li>
+      <li><a href="videos.html">Ver PlayList</a></li>
+      <li><a href="login.html">Cerrar Sesión</a></li>
+    </ul>
+  </nav>
+</header>
+
+
+  <div class="container">
+    <h1>Crear Usuario Restringido</h1>
+    <div id="errorMessages"></div> <!-- Nuevo elemento para mostrar los mensajes de error -->
+    <form id="crearUsuarioForm">
+      <label for="nombreCompleto">Nombre Completo*</label>
+      <input type="text" id="nombreCompleto" required>
+      <label for="pin">PIN*</label>
+      <input type="text" id="pin" required pattern="[0-9]{6}" title="El PIN debe tener exactamente 6 dígitos.">
+      <!-- Agregamos el atributo pattern para especificar que el PIN debe tener exactamente 6 dígitos -->
+      <label for="avatar">Avatar*</label>
+      <select id="avatar" required>
+        <option value="/img/hacker.png">Avatar 1(Hacker)</option>
+        <option value="/img/cat.png">Avatar 2(Gato)</option>
+        <option value="/img/panda.png">Avatar 3(panda)</option>
+        <option value="/img/bear.png">Avatar 4(Oso)</option>
+      </select>
+      <label for="edad">Edad*</label>
+      <input type="number" id="edad" required>
+      <button type="submit" id="crearUsuarioBtn">Crear Usuario</button>
+      
+      <button onclick="irAEditar()">Editar Perfil</button>
+    </form>
+
+  </div>
+
+  <script>
+    // JavaScript para interactuar con la página
+  
+    // Obtener el ID del usuario del localStorage
+    const userId = localStorage.getItem('userId');
+  
+    // Manejador de eventos para enviar el formulario de creación de usuario
+    document.getElementById('crearUsuarioForm').addEventListener('submit', async (event) => {
+      event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+      const nombreCompleto = document.getElementById('nombreCompleto').value; // Obtener el nombre completo
+      const pin = document.getElementById('pin').value; // Obtener el PIN
+      const avatar = document.getElementById('avatar').value; // Obtener el avatar
+      const edad = document.getElementById('edad').value; // Obtener la edad
+  
+      try {
+        // Validar que todos los campos estén llenos antes de enviar la solicitud al servidor
+        if (!nombreCompleto || !pin || !avatar || !edad) {
+          throw new Error('Todos los campos son requeridos.');
+        }
+  
+        // Validar el formato del PIN
+        if (!/^\d{6}$/g.test(pin)) {
+          throw new Error('Formato de PIN incorrecto. Debe ser un número de 6 dígitos.');
+        }
+  
+        // Enviar la solicitud al servidor utilizando fetch API
+        const response = await fetch('http://localhost:3000/api/perfiles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombreCompleto, pin, avatar, edad, userId }) // Convertir datos a formato JSON
+        });
+        const data = await response.json(); // Convertir la respuesta a formato JSON
+        console.log('Usuario restringido creado:', data); // Mostrar la respuesta en la consola
+        limpiarFormulario(); // Limpiar el formulario después de crear el usuario
+        alert('Usuario creado exitosamente'); // Mostrar mensaje de éxito
+      } catch (error) {
+        console.error('Error al crear usuario restringido:', error); // Mostrar errores en la consola
+        const errorMessageDiv = document.getElementById('errorMessages'); // Obtener el div para mensajes de error
+        errorMessageDiv.innerHTML = `<p>${error.message}</p>`; // Mostrar el mensaje de error en el div
+      }
+    });
+  
+    // Función para limpiar el formulario
+    function limpiarFormulario() {
+      document.getElementById('nombreCompleto').value = ''; // Limpiar el campo de nombre completo
+      document.getElementById('pin').value = ''; // Limpiar el campo de PIN
+      document.getElementById('avatar').value = '/img/hacker.png'; // Restaurar la opción de avatar por defecto
+      document.getElementById('edad').value = ''; // Limpiar el campo de edad
+    }
+  
+    // Función para redirigir a la página de edición de perfil
+    function irAEditar() {
+      window.location.href = './editPerfiles.html'; // Redireccionar a la página de edición de perfil
+    }
+  </script>
+</body>
+</html>

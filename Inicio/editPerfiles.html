@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listado de Usuarios Restringidos</title>
+  <link rel="stylesheet" href="/styles/perfiles.css">
+  <link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body>
+  
+<header>
+    <h1>Panel de Administrador</h1>
+    <nav>
+      <ul>
+        <li><a href="Inicio.html">Perfiles</a></li>
+        <li><a href="crearPerfiles.html">Gestión de  Perfiles</a></li>
+        <li><a href="crearVideos.html">Gestión de Videos</a></li>
+        <li><a href="videos.html">Ver PlayList</a></li>
+        <li><a href="login.html">Cerrar Sesión</a></li>
+      </ul>
+    </nav>
+  </header>
+  
+
+  <div class="container">
+    <h1>Usuarios Restringidos</h1>
+    <ul id="usuariosRestringidosList"></ul>
+  </div>
+
+  <div id="editarUsuarioFormContainer" style="display: none;">
+    <h2>Editar Usuario</h2>
+    <form id="editarUsuarioForm">
+      <input type="hidden" id="editId">
+      <label for="editNombreCompleto">Nombre Completo*</label>
+      <input type="text" id="editNombreCompleto" required>
+      <label for="editPin">PIN*</label>
+      <input type="text" id="editPin" pattern="[0-9]{6}" title="El PIN debe tener exactamente 6 dígitos" required>
+      <label for="editAvatar">Avatar*</label>
+      <select id="editAvatar" required>
+        <option value="/img/hacker.png">Avatar 1</option>
+        <option value="/img/cat.png">Avatar 2</option>
+        <option value="/img/panda.png">Avatar 3</option>
+        <option value="/img/bear.png">Avatar 4</option>
+      </select>
+      <label for="editEdad">Edad*</label>
+      <input type="number" id="editEdad" required>
+      <button type="submit">Guardar Cambios</button>
+    </form>
+  </div>
+
+  <script>
+    // Obtener referencias a los elementos del DOM
+    const usuariosRestringidosList = document.getElementById('usuariosRestringidosList');
+    const editarUsuarioFormContainer = document.getElementById('editarUsuarioFormContainer');
+    const editarUsuarioForm = document.getElementById('editarUsuarioForm');
+    const editIdInput = document.getElementById('editId');
+    const editNombreCompletoInput = document.getElementById('editNombreCompleto');
+    const editPinInput = document.getElementById('editPin');
+    const editAvatarInput = document.getElementById('editAvatar');
+    const editEdadInput = document.getElementById('editEdad');
+
+    // Función para cargar los usuarios restringidos del usuario actual
+    async function cargarUsuariosRestringidos(userId) {
+      try {
+        // Realizar una solicitud GET para obtener los usuarios restringidos del usuario actual
+        const response = await fetch(`http://localhost:3000/api/perfiles?userId=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        // Convertir la respuesta a formato JSON
+        const data = await response.json();
+        // Limpiar la lista de usuarios restringidos antes de agregar nuevos elementos
+        usuariosRestringidosList.innerHTML = '';
+        // Iterar sobre cada usuario restringido y crear elementos HTML para mostrarlos en la lista
+        data.forEach(usuario => {
+          const listItem = document.createElement('li');
+          // Crear el contenido del elemento de lista con información del usuario y botones de acción
+          listItem.innerHTML = `
+            <span>${usuario.nombreCompleto}</span>
+            <span><img src="${usuario.avatar}" alt="Avatar" style="width: 50px; height: 50px;"></span>
+            <button onclick="mostrarFormularioEditar('${usuario._id}', '${usuario.nombreCompleto}', '${usuario.pin}', '${usuario.avatar}', ${usuario.edad})">Editar</button>
+            <button onclick="eliminarUsuario('${usuario._id}')">Eliminar</button>
+          `;
+          // Agregar el elemento de lista a la lista de usuarios restringidos
+          usuariosRestringidosList.appendChild(listItem);
+        });
+      } catch (error) {
+        console.error('Error al cargar usuarios restringidos:', error);
+      }
+    }
+
+    // Función para mostrar el formulario de edición de usuario con los datos del usuario seleccionado
+    function mostrarFormularioEditar(id, nombreCompleto, pin, avatar, edad) {
+      // Mostrar el contenedor del formulario de edición
+      editarUsuarioFormContainer.style.display = 'block';
+      // Establecer los valores de los campos del formulario con los datos del usuario seleccionado
+      editIdInput.value = id;
+      editNombreCompletoInput.value = nombreCompleto;
+      editPinInput.value = pin;
+      editAvatarInput.value = avatar;
+      editEdadInput.value = edad;
+    }
+
+    // Agregar un evento de escucha al formulario de edición de usuario
+    editarUsuarioForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+      // Obtener los valores de los campos del formulario
+      const id = editIdInput.value;
+      const nombreCompleto = editNombreCompletoInput.value;
+      const pin = editPinInput.value;
+      const avatar = editAvatarInput.value;
+      const edad = editEdadInput.value;
+
+      try {
+        // Realizar una solicitud PUT para actualizar el usuario con los nuevos datos
+        const response = await fetch(`http://localhost:3000/api/perfiles/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombreCompleto, pin, avatar, edad }) // Enviar los nuevos datos del usuario en formato JSON
+        });
+        // Convertir la respuesta a formato JSON
+        const data = await response.json();
+        console.log('Usuario actualizado:', data);
+        editarUsuarioFormContainer.style.display = 'none'; // Ocultar el formulario de edición
+        cargarUsuariosRestringidos(userId); // Volver a cargar la lista de usuarios restringidos
+      } catch (error) {
+        console.error('Error al editar usuario restringido:', error);
+      }
+    });
+
+    // Función para eliminar un usuario restringido
+    async function eliminarUsuario(id) {
+      // Confirmar si el usuario está seguro de eliminar el usuario restringido
+      if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+        try {
+          // Realizar una solicitud DELETE para eliminar el usuario restringido con el ID proporcionado
+          const response = await fetch(`http://localhost:3000/api/perfiles?id=${id}`, {
+            method: 'DELETE'
+          });
+          // Convertir la respuesta a formato JSON
+          const data = await response.json();
+          console.log('Usuario eliminado:', data);
+          cargarUsuariosRestringidos(userId); // Volver a cargar la lista de usuarios restringidos
+        } catch (error) {
+          console.error('Error al eliminar usuario restringido:', error);
+        }
+      }
+    }
+
+    // Obtener el ID del usuario del localStorage
+    const userId = localStorage.getItem('userId');
+    cargarUsuariosRestringidos(userId); // Cargar los usuarios restringidos al cargar la página
+  </script>
+
+</body>
+</html>

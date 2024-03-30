@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfiles</title>
+<link rel="stylesheet" type="text/css" href="/styles/administrador.css">
+</head>
+<body>
+
+  <div class="navbar">
+    <a href="login.html" onclick="logout()">Cerrar Sesión</a>
+    <!-- <a href="administrador.html" onclick="backToProfiles()">Perfiles</a> -->
+  </div>
+
+<h1>Perfiles</h1>
+
+<div id="perfiles-list"></div>
+
+<script>
+// Función para cargar los perfiles desde el servidor
+async function cargarPerfiles() {
+  try {
+    const userId = localStorage.getItem('userId'); // Obtener el ID del usuario del localStorage
+
+    const response = await fetch(`http://localhost:3000/api/perfiles?userId=${userId}`, { // Modificar la URL de la solicitud GET para incluir el ID del usuario
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await response.json();
+    
+    const perfilesList = document.getElementById('perfiles-list');
+    perfilesList.innerHTML = ''; // Limpiar la lista antes de mostrar los perfiles
+
+    data.forEach(perfil => {
+      const perfilElement = document.createElement('div');
+      perfilElement.classList.add('perfil'); // Agregar la clase para el estilo CSS
+      perfilElement.innerHTML = `
+        <h2 class="nombreCompleto">${perfil.nombreCompleto}</h2>
+        <img class="avatar" src="${perfil.avatar}" alt="Avatar" width="100">
+        ${perfil.nombreCompleto !== "administrador" ? `
+          <p>PIN: <input type="text" class="pin-input" id="pin-${perfil._id}" placeholder="Ingrese el PIN"></p>
+          <button class="ingresar-btn" onclick="ingresar('${perfil._id}', '${perfil.nombreCompleto}')">Ingresar</button>
+        ` : `
+        <br />
+          <button class="ingresar-btn" onclick="ingresarComoAdministrador()">Ingresar como Administrador</button>
+        `}
+        <hr>
+      `;
+      perfilesList.appendChild(perfilElement);
+    });
+  } catch (error) {
+    console.error('Error al cargar los perfiles:', error);
+  }
+}
+
+// Función para ingresar como administrador
+function ingresarComoAdministrador() {
+  window.location.href = "./loginPin.html"; // Redirigir directamente al panel de administrador
+}
+
+// Función para enviar el PIN al servidor e ingresar
+async function ingresar(perfilId, nombreCompleto) {
+  if (nombreCompleto === "administrador") {
+    window.location.href = "./loginPin.html"; // Redirigir directamente al panel de administrador
+    return;
+  }
+
+  const pinInput = document.getElementById(`pin-${perfilId}`);
+  const pin = pinInput.value;
+
+  try {
+    // Validar el formato del PIN
+    if (!pin || isNaN(pin) || pin.length !== 6) {
+      throw new Error('El PIN debe ser un número de 6 dígitos.');
+    }
+
+    const response = await fetch('http://localhost:3000/api/loginPin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ pin })
+    });
+    const data = await response.json();
+
+    // Si el inicio de sesión es exitoso, redirigir al usuario según la respuesta del backend
+    if (response.ok) {
+      if (data.redirectURL) {
+        window.location.href = data.redirectURL; // Redirigir a la URL proporcionada por el backend
+      } else {
+        console.error('No se proporcionó una URL de redirección válida.');
+      }
+    } else {
+      if (data.error === 'PIN inválido') {
+        alert('PIN inválido. Por favor, ingrese un PIN válido.');
+      } else {
+        alert(data.error); // Mostrar mensaje de error
+      }
+    }
+    
+    // Borrar el código del campo de entrada después de ingresar
+    pinInput.value = ''; // Establecer el valor del campo como una cadena vacía
+  } catch (error) {
+    console.error('Error al ingresar:', error);
+  }
+}
+
+// Cargar los perfiles al cargar la página
+window.onload = cargarPerfiles;
+
+// Refrescar los perfiles cada 5 minutos
+setInterval(cargarPerfiles, 300000); // 300000 milisegundos = 5 minutos
+</script>
+
+</body>
+</html>

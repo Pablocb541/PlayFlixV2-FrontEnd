@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Video</title>
+  <link rel="stylesheet" href="../Styles/CrudVideos.css">
+  <link rel="stylesheet" href="../Styles/admin.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container-navbar">
+        <h1>Panel de Administrador</h1>
+        <nav class="navbar-nav">
+            <ul class="navbar-list">
+                <a href="Inicio.html">Perfiles</a>
+                <a href="crearPerfiles.html">Gestión de  Perfiles</a>
+                <a href="crearVideos.html">Gestión de Videos</a>
+                <a href="login.html">Cerrar Sesión</a>
+            </ul>
+        </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1>Crear Video</h1>
+    <div id="errorMessages"></div> <!-- Nuevo elemento para mostrar los mensajes de error -->
+    <form id="crearVideoForm">
+      <label for="nombre">Nombre*</label>
+      <input type="text" id="nombre" required>
+      <label for="url">URL de YouTube*</label>
+      <input type="text" id="url" required>
+      <button type="submit" id="crearVideoBtn">Crear Video</button>
+      <button onclick="irAEditar()">Editar Videos</button>
+    </form>
+  </div>
+
+  <script>
+    // Obtener el ID del usuario del localStorage
+    const userId = localStorage.getItem('userId');
+
+    // Agregar un evento de escucha al formulario de creación de videos
+    document.getElementById('crearVideoForm').addEventListener('submit', async (event) => {
+      event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+
+      // Obtener los valores de los campos de nombre y URL del video
+      const nombre = document.getElementById('nombre').value;
+      const url = document.getElementById('url').value;
+
+      try {
+        // Validar que ambos campos estén llenos antes de enviar la solicitud al servidor
+        if (!nombre || !url) {
+          throw new Error('Todos los campos son requeridos.');
+        }
+
+        // Enviar una solicitud POST al servidor para crear un nuevo video
+        const response = await fetch('http://localhost:3000/api/videos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Incluir el ID del usuario en las cabeceras de la solicitud
+          },
+          body: JSON.stringify({ name: nombre, youtubeUrl: url , 'userId': userId})
+        });
+
+        // Verificar si la respuesta del servidor es exitosa
+        if (response.ok) {
+          // Mostrar una alerta indicando que el video se creó exitosamente
+          alert('Video creado exitosamente');
+          // Limpiar el formulario después de crear el video
+          document.getElementById('crearVideoForm').reset();
+        } else {
+          // Mostrar un mensaje de error si la respuesta del servidor no es exitosa
+          const errorMessageDiv = document.getElementById('errorMessages');
+          errorMessageDiv.innerHTML = `<p>Error al crear el video: ${response.statusText}</p>`;
+        }
+      } catch (error) {
+        // Capturar y manejar cualquier error que ocurra durante el proceso
+        console.error('Error al crear el video:', error);
+        // Mostrar el mensaje de error en caso de un error
+        const errorMessageDiv = document.getElementById('errorMessages');
+        errorMessageDiv.innerHTML = `<p>${error.message}</p>`;
+      }
+    });
+
+    // Función para redirigir al usuario a la página de edición de videos
+    function irAEditar() {
+      window.location.href = './editarVideos.html';
+    }
+</script>
+
+</body>
+</html>
