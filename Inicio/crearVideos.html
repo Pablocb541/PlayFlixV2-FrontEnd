@@ -3,91 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crear Video</title>
+  <title>Gestión de Playlists</title>
   <link rel="stylesheet" href="../Styles/CrudVideos.css">
   <link rel="stylesheet" href="../Styles/admin.css">
 </head>
 <body>
   <header class="navbar">
     <div class="container-navbar">
-        <h1>Panel de Administrador</h1>
-        <nav class="navbar-nav">
-            <ul class="navbar-list">
-                <a href="Inicio.html">Perfiles</a>
-                <a href="crearPerfiles.html">Gestión de  Perfiles</a>
-                <a href="crearVideos.html">Gestión de Videos</a>
-                <a href="login.html">Cerrar Sesión</a>
-            </ul>
-        </nav>
+      <h1>Panel de Administrador</h1>
+      <nav class="navbar-nav">
+        <ul class="navbar-list">
+          <a href="Inicio.html">Perfiles</a>
+          <a href="crearPerfiles.html">Gestión de Perfiles</a>
+          <a href="#">Gestión de Playlists</a>
+          <a href="login.html">Cerrar Sesión</a>
+        </ul>
+      </nav>
     </div>
   </header>
 
   <div class="container">
-    <h1>Crear Video</h1>
-    <div id="errorMessages"></div> <!-- Nuevo elemento para mostrar los mensajes de error -->
-    <form id="crearVideoForm">
-      <label for="nombre">Nombre*</label>
-      <input type="text" id="nombre" required>
-      <label for="url">URL de YouTube*</label>
-      <input type="text" id="url" required>
-      <button type="submit" id="crearVideoBtn">Crear Video</button>
-      <button onclick="irAEditar()">Editar Videos</button>
-    </form>
+    <h1>Gestión de Playlists</h1>
+    <div id="errorMessages"></div>
+
+    <div>
+      <h2>Crear Playlist</h2>
+      <form id="crearPlaylistForm">
+        <label for="nombrePlaylist">Nombre de la Playlist*</label>
+        <input type="text" id="nombrePlaylist" required>
+        <button type="submit">Crear Playlist</button>
+      </form>
+    </div>
+
+    <div>
+      <h2>Playlists Existentes</h2>
+      <ul id="playlistsList"></ul>
+      <button onclick="irAAgregarVideos()">Agregar Videos a Playlists</button>
+    </div>
   </div>
 
   <script>
     // Obtener el ID del usuario del localStorage
     const userId = localStorage.getItem('userId');
 
-    // Agregar un evento de escucha al formulario de creación de videos
-    document.getElementById('crearVideoForm').addEventListener('submit', async (event) => {
-      event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+    // Función para obtener todas las playlists del usuario
+    async function obtenerPlaylists() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`);
+        const playlists = await response.json();
+        renderizarPlaylists(playlists);
+      } catch (error) {
+        console.error('Error al obtener las playlists:', error);
+        mostrarMensajeError('Error al obtener las playlists');
+      }
+    }
 
-      // Obtener los valores de los campos de nombre y URL del video
-      const nombre = document.getElementById('nombre').value;
-      const url = document.getElementById('url').value;
+    // Función para renderizar las playlists en la página
+    function renderizarPlaylists(playlists) {
+      const playlistsList = document.getElementById('playlistsList');
+      playlistsList.innerHTML = '';
+
+      playlists.forEach(playlist => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          ${playlist.name} (${playlist.videos.length} videos)
+          <button onclick="editarPlaylist('${playlist._id}', '${playlist.name}')">Editar</button>
+          <button onclick="eliminarPlaylist('${playlist._id}')">Eliminar</button>
+        `;
+        playlistsList.appendChild(li);
+      });
+    }
+
+    // Función para mostrar un mensaje de error
+    function mostrarMensajeError(mensaje) {
+      const errorMessageDiv = document.getElementById('errorMessages');
+      errorMessageDiv.innerHTML = `<p>${mensaje}</p>`;
+    }
+
+    // Evento de envío del formulario de creación de playlists
+    document.getElementById('crearPlaylistForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const nombrePlaylist = document.getElementById('nombrePlaylist').value;
 
       try {
-        // Validar que ambos campos estén llenos antes de enviar la solicitud al servidor
-        if (!nombre || !url) {
-          throw new Error('Todos los campos son requeridos.');
+        if (!nombrePlaylist) {
+          throw new Error('El nombre de la playlist es requerido.');
         }
 
-        // Enviar una solicitud POST al servidor para crear un nuevo video
-        const response = await fetch('http://localhost:3000/api/videos', {
+        const response = await fetch('http://localhost:3000/api/playlists', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // Incluir el ID del usuario en las cabeceras de la solicitud
           },
-          body: JSON.stringify({ name: nombre, youtubeUrl: url , 'userId': userId})
+          body: JSON.stringify({ name: nombrePlaylist, associatedProfiles: [userId] }),
         });
 
-        // Verificar si la respuesta del servidor es exitosa
         if (response.ok) {
-          // Mostrar una alerta indicando que el video se creó exitosamente
-          alert('Video creado exitosamente');
-          // Limpiar el formulario después de crear el video
-          document.getElementById('crearVideoForm').reset();
+          alert('Playlist creada exitosamente');
+          document.getElementById('crearPlaylistForm').reset();
+          obtenerPlaylists(); // Actualizar la lista de playlists después de crear una nueva
         } else {
-          // Mostrar un mensaje de error si la respuesta del servidor no es exitosa
-          const errorMessageDiv = document.getElementById('errorMessages');
-          errorMessageDiv.innerHTML = `<p>Error al crear el video: ${response.statusText}</p>`;
+          mostrarMensajeError(`Error al crear la playlist: ${response.statusText}`);
         }
       } catch (error) {
-        // Capturar y manejar cualquier error que ocurra durante el proceso
-        console.error('Error al crear el video:', error);
-        // Mostrar el mensaje de error en caso de un error
-        const errorMessageDiv = document.getElementById('errorMessages');
-        errorMessageDiv.innerHTML = `<p>${error.message}</p>`;
+        console.error('Error al crear la playlist:', error);
+        mostrarMensajeError(error.message);
       }
     });
 
-    // Función para redirigir al usuario a la página de edición de videos
-    function irAEditar() {
+    // Función para redirigir a la página de agregar videos a playlists
+    function irAAgregarVideos() {
       window.location.href = './editarVideos.html';
     }
-</script>
 
+    // Función para editar una playlist
+    function editarPlaylist(playlistId, playlistName) {
+      // Implementa la lógica para editar la playlist aquí
+      console.log(`Editar playlist: ${playlistId}, ${playlistName}`);
+    }
+
+    // Función para eliminar una playlist
+    async function eliminarPlaylist(playlistId) {
+      // Confirmar si el usuario está seguro de eliminar la playlist
+      if (confirm('¿Estás seguro de que deseas eliminar esta playlist?')) {
+        try {
+          // Realizar una solicitud DELETE para eliminar la playlist con el ID proporcionado
+          const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}`, {
+            method: 'DELETE'
+          });
+          // Verificar si la respuesta del servidor es exitosa
+          if (response.ok) {
+            alert('Playlist eliminada correctamente');
+            obtenerPlaylists(); // Actualizar la lista de playlists después de eliminar una
+          } else {
+            mostrarMensajeError(`Error al eliminar la playlist: ${response.statusText}`);
+          }
+        } catch (error) {
+          console.error('Error al eliminar la playlist:', error);
+          mostrarMensajeError('Error al eliminar la playlist');
+        }
+      }
+    }
+
+    // Obtener las playlists al cargar la página
+    obtenerPlaylists();
+  </script>
 </body>
 </html>

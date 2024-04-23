@@ -29,6 +29,9 @@
         <label for="pin">PIN (6 dígitos) *</label>
         <input type="text" id="pin" name="pin" pattern="[0-9]{6}" title="El PIN debe tener exactamente 6 dígitos" required>
 
+        <label for="telefono">Teléfono *</label>
+        <input type="text" id="telefono" name="telefono" pattern="[0-9]+" title="Solo se permiten números" required>
+
         <label for="pais">País</label>
         <input type="text" id="pais" name="pais" pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+" title="Solo se permiten letras y espacios">
 
@@ -74,7 +77,7 @@
                 // Si el registro fue exitoso
                 if (response.ok) {
                     // Mostrar una alerta de éxito
-                    showAlert('Registro exitoso', 'alert-success');
+                    showAlert('Registro exitoso. Por favor, verifica tu correo electrónico.', 'alert-success');
                     // Limpiar los campos del formulario después de enviarlos
                     document.getElementById("registro-form").reset();
                 } else {
