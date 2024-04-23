@@ -1,33 +1,72 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Playlist</title>
-  <link rel="stylesheet" href="/styles/videos.css">
+  <link rel="stylesheet" href="../Styles/CrudVideos.css">
+  <link rel="stylesheet" href="../Styles/admin.css">
+  <title>Gestión de Playlists</title>
 </head>
 <body>
-  <div class="navbar">
-    <a href="login.html" onclick="logout()">Cerrar Sesión</a>
-    <a href="Inicio.html" onclick="backToProfiles()">Perfiles</a>
+  <div class="container">
+    <h1>Gestión de Playlists</h1>
+    <div id="errorMessages"></div>
+    <input type="text" id="searchInput" placeholder="Buscar videos...">
+    <div>
+      <h2>Playlists Existentes</h2>
+      <ul id="playlistsList"></ul>
+    </div>
+    <div id="playlistVideos"></div>
   </div>
 
-  <h1>Playlist</h1>
-
-  <!-- Contenedor donde se muestam los videos -->
-  <div id="videoContainer"></div>
-
   <script>
-    // Clase para extraer y mostrar los videos
+    // Obtener el ID del usuario del localStorage
+    const userId = localStorage.getItem('userId');
+
+    // Función para obtener todas las playlists del usuario
+    async function obtenerPlaylists() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`);
+        const playlists = await response.json();
+        renderizarPlaylists(playlists);
+      } catch (error) {
+        console.error('Error al obtener las playlists:', error);
+        mostrarMensajeError('Error al obtener las playlists');
+      }
+    }
+
+    // Función para renderizar las playlists en la página
+    function renderizarPlaylists(playlists) {
+      const playlistsList = document.getElementById('playlistsList');
+      playlistsList.innerHTML = '';
+
+      playlists.forEach(playlist => {
+        const li = document.createElement('li');
+        li.setAttribute('data-id', playlist._id);
+        li.innerHTML = `
+          ${playlist.name} (${playlist.videos.length} videos)
+          <button onclick="verPlaylist('${playlist._id}')">Ver Playlist</button>
+        `;
+        playlistsList.appendChild(li);
+      });
+    }
+
+    // Función para mostrar un mensaje de error
+    function mostrarMensajeError(mensaje) {
+      const errorMessageDiv = document.getElementById('errorMessages');
+      errorMessageDiv.innerHTML = `<p>${mensaje}</p>`;
+    }
+
+    // Clase para extraer y mostrar los videos de una playlist
     class YouTubeLinkExtractor {
       constructor(apiUrl) {
         this.apiUrl = apiUrl;
       }
 
-      // Método para obtener los videos del servidor
-      async fetchVideos(userId) {
+      async fetchVideos(playlistId) {
         try {
-          const response = await fetch(`${this.apiUrl}?userId=${userId}`); // Envía el ID de usuario como parámetro
+          const response = await fetch(`${this.apiUrl}/${playlistId}/videos`);
           const data = await response.json();
           return data;
         } catch (error) {
@@ -36,9 +75,33 @@
         }
       }
 
-      // Método para renderizar los videos en el contenedor especificado
-      async renderVideos(containerId, userId) {
-        const videos = await this.fetchVideos(userId); // Obtener los videos del servidor
+      async fetchPlaylistIds(userId) {
+        try {
+          const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`);
+          const playlists = await response.json();
+          return playlists.map(playlist => playlist._id);
+        } catch (error) {
+          console.error('Error al obtener los IDs de las playlists:', error);
+          return [];
+        }
+      }
+
+      async fetchAllVideos(playlistIds) {
+        try {
+          const allVideos = [];
+          for (const playlistId of playlistIds) {
+            const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}/videos`);
+            const videos = await response.json();
+            allVideos.push(...videos);
+          }
+          return allVideos;
+        } catch (error) {
+          console.error('Error al obtener todos los videos:', error);
+          return [];
+        }
+      }
+
+      async renderVideos(containerId, videos) {
         const container = document.getElementById(containerId);
         if (!container) {
           console.error(`Container element with ID ${containerId} not found.`);
@@ -46,49 +109,40 @@
         }
         container.innerHTML = ''; // Limpiar el contenedor antes de agregar los videos
 
-       
         for (let i = 0; i < videos.length; i++) {
           const video = videos[i];
-          const videoId = this.extractVideoId(video.youtubeUrl); // Extraer el ID del video de la URL de YouTube
+          const videoId = this.extractVideoId(video.youtubeUrl);
           const videoContainer = document.createElement('div');
           videoContainer.classList.add('video-container');
 
-          // Agregar evento de clic al contenedor de video para reproducirlo
           videoContainer.addEventListener('click', () => {
-            // Crear un iframe para reproducir el video de YouTube
             const iframe = document.createElement('iframe');
             iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
             iframe.title = 'YouTube video player';
             iframe.frameBorder = '0';
             iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
             iframe.allowFullscreen = true;
-            videoContainer.innerHTML = ''; // Limpiar el contenedor antes de agregar el iframe
-            videoContainer.appendChild(iframe); // Agregar el iframe al contenedor
+            videoContainer.innerHTML = '';
+            videoContainer.appendChild(iframe);
           });
-          
-          // Crear una imagen en miniatura del video
+
           const thumbnail = document.createElement('img');
           thumbnail.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
           thumbnail.alt = 'Video Thumbnail';
           thumbnail.classList.add('video-thumbnail');
 
-          // Crear una superposición con el título del video
           const overlay = document.createElement('div');
           overlay.classList.add('video-overlay');
           overlay.innerHTML = `
             <div class="video-title">${video.name}</div>
           `;
 
-          // Agregar la imagen en miniatura y la superposición al contenedor del video
           videoContainer.appendChild(thumbnail);
           videoContainer.appendChild(overlay);
-
-          // Agregar el contenedor del video al contenedor principal
           container.appendChild(videoContainer);
         }
       }
 
-      // Método para extraer el ID del video de la URL de YouTube
       extractVideoId(youtubeUrl) {
         const url = new URL(youtubeUrl);
         const videoId = url.searchParams.get('v');
@@ -96,14 +150,49 @@
       }
     }
 
-    // Obtener el ID de usuario del localStorage
-    const userId = localStorage.getItem('userId');
+    // Función para ver los videos de una playlist
+    async function verPlaylist(playlistId) {
+      try {
+        const extractor = new YouTubeLinkExtractor('http://localhost:3000/api/playlists');
+        extractor.renderVideos('playlistVideos', await extractor.fetchVideos(playlistId));
+      } catch (error) {
+        console.error('Error al obtener los videos de la playlist:', error);
+        mostrarMensajeError('Error al obtener los videos de la playlist');
+      }
+    }
 
-    // Crear una instancia de la clase YouTubeLinkExtractor con la URL del servidor de videos
-    const extractor = new YouTubeLinkExtractor('http://localhost:3000/api/videos');
-    // Renderizar los videos en el contenedor con el ID 'videoContainer'
-    extractor.renderVideos('videoContainer', userId);
-</script>
+    // Función para buscar videos
+    async function searchVideos(searchText) {
+      try {
+        const extractor = new YouTubeLinkExtractor('http://localhost:3000/api/playlists');
+        const playlistIds = await extractor.fetchPlaylistIds(userId);
+        const allVideos = await extractor.fetchAllVideos(playlistIds);
 
+        const filteredVideos = allVideos.filter(video => {
+          const videoName = video.name.toLowerCase();
+          const videoDescription = video.description.toLowerCase();
+          return videoName.includes(searchText) || videoDescription.includes(searchText);
+        });
+
+        extractor.renderVideos('playlistVideos', filteredVideos);
+      } catch (error) {
+        console.error('Error al buscar videos:', error);
+        mostrarMensajeError('Error al buscar videos');
+      }
+    }
+
+    // Obtener las playlists al cargar la página
+    obtenerPlaylists();
+
+    // Mostrar todos los videos al cargar la página
+    searchVideos('');
+
+    // Escuchar cambios en el campo de búsqueda
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', () => {
+      const searchText = searchInput.value.toLowerCase();
+      searchVideos(searchText);
+    });
+  </script>
 </body>
 </html>

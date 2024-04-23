@@ -65,10 +65,11 @@
 
       playlists.forEach(playlist => {
         const li = document.createElement('li');
+        li.setAttribute('data-id', playlist._id);
         li.innerHTML = `
           ${playlist.name} (${playlist.videos.length} videos)
           <button onclick="editarPlaylist('${playlist._id}', '${playlist.name}')">Editar</button>
-          <button onclick="eliminarPlaylist('${playlist._id}')">Eliminar</button>
+          <button onclick="eliminarPlaylist('${playlist._id}', '${playlist.name}')">Eliminar</button>
         `;
         playlistsList.appendChild(li);
       });
@@ -119,14 +120,58 @@
 
     // Función para editar una playlist
     function editarPlaylist(playlistId, playlistName) {
-      // Implementa la lógica para editar la playlist aquí
-      console.log(`Editar playlist: ${playlistId}, ${playlistName}`);
+      // Buscar el elemento de la lista de playlists correspondiente al playlistId
+      const playlistItem = document.querySelector(`li[data-id="${playlistId}"]`);
+
+      // Crear un campo de entrada para editar el nombre
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = playlistName;
+
+      // Reemplazar el texto del nombre con el campo de entrada
+      playlistItem.innerHTML = '';
+      playlistItem.appendChild(input);
+
+      // Enfocar el campo de entrada
+      input.focus();
+
+      // Agregar un event listener para guardar los cambios al presionar Enter o hacer clic fuera del campo
+      input.addEventListener('blur', () => guardarNombrePlaylist(playlistId, input.value));
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          guardarNombrePlaylist(playlistId, input.value);
+        }
+      });
+    }
+
+    // Función para guardar el nombre editado de la playlist
+    async function guardarNombrePlaylist(playlistId, nuevoNombre) {
+      try {
+        // Realizar una solicitud PUT para actualizar el nombre de la playlist en el backend
+        const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: nuevoNombre }),
+        });
+
+        if (response.ok) {
+          alert('Nombre de playlist actualizado correctamente');
+          obtenerPlaylists(); // Actualizar la lista de playlists después de editar
+        } else {
+          mostrarMensajeError(`Error al actualizar el nombre de la playlist: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('Error al actualizar el nombre de la playlist:', error);
+        mostrarMensajeError('Error al actualizar el nombre de la playlist');
+      }
     }
 
     // Función para eliminar una playlist
-    async function eliminarPlaylist(playlistId) {
+    async function eliminarPlaylist(playlistId, playlistName) {
       // Confirmar si el usuario está seguro de eliminar la playlist
-      if (confirm('¿Estás seguro de que deseas eliminar esta playlist?')) {
+      if (confirm(`¿Estás seguro de que deseas eliminar la playlist "${playlistName}"?`)) {
         try {
           // Realizar una solicitud DELETE para eliminar la playlist con el ID proporcionado
           const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}`, {
