@@ -17,16 +17,22 @@
 
 <div id="perfiles-list"></div>
 
+
 <script>
+    const userId = localStorage.getItem('userId'); // Obtener el ID del usuario del localStorage
+    
+    const token = localStorage.getItem('token'); // Obtener el token de autorización del localStorage
+
 // Función para cargar los perfiles desde el servidor
 async function cargarPerfiles() {
   try {
-    const userId = localStorage.getItem('userId'); // Obtener el ID del usuario del localStorage
+    
 
     const response = await fetch(`http://localhost:3000/api/perfiles?userId=${userId}`, { // Modificar la URL de la solicitud GET para incluir el ID del usuario
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       }
     });
     const data = await response.json();
@@ -80,7 +86,8 @@ async function ingresar(perfilId, nombreCompleto) {
     const response = await fetch('http://localhost:3000/api/loginPin', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ pin })
     });

@@ -63,14 +63,21 @@
     const editUrlInput = document.getElementById('editUrl');
     const editDescripcionInput = document.getElementById('editDescripcion');
 
+    const token = localStorage.getItem('token');
+
     // Función para cargar las playlists disponibles
    
           async function cargarPlaylists() {
             try {
               // Obtener el ID del usuario del localStorage
               const userId = localStorage.getItem('userId');
+
               // Realizar una solicitud GET para obtener las playlists del usuario
-              const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`);
+              const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
               const playlists = await response.json();
 
               // Limpiar el combobox de playlists antes de agregar nuevas opciones
@@ -103,7 +110,11 @@
         // Obtener el ID de la playlist seleccionada
         const playlistId = playlistSelect.value;
         // Realizar una solicitud GET para obtener los videos asociados a la playlist
-        const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}/videos`);
+        const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}/videos`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const videos = await response.json();
         
         // Limpiar la lista de videos antes de agregar nuevos elementos
@@ -154,7 +165,8 @@
         const response = await fetch(`http://localhost:3000/api/videos/${id}`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ name: nombre, youtubeUrl: youtubeUrl, descripcion: descripcion }) // Enviar los nuevos datos del video en formato JSON
         });
@@ -177,7 +189,10 @@
         try {
           // Realizar una solicitud DELETE para eliminar el video con el ID proporcionado
           const response = await fetch(`http://localhost:3000/api/videos?id=${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
           });
           // Verificar si la respuesta del servidor es exitosa
           if (response.ok) {

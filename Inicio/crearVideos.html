@@ -52,11 +52,17 @@
   <script>
     // Obtener el ID del usuario del localStorage
     const userId = localStorage.getItem('userId');
+      // Obtener el token del localStorage
+    const token = localStorage.getItem('token');
 
     // Función para obtener todas las playlists del usuario
     async function obtenerPlaylists() {
       try {
-        const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`);
+        const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const playlists = await response.json();
         renderizarPlaylists(playlists);
       } catch (error) {
@@ -106,6 +112,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ name: nombrePlaylist, associatedProfiles: usuariosIds }),
         });
@@ -162,6 +169,7 @@
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ name: nuevoNombre }),
         });
@@ -185,7 +193,10 @@
         try {
           // Realizar una solicitud DELETE para eliminar la playlist con el ID proporcionado
           const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
           });
           // Verificar si la respuesta del servidor es exitosa
           if (response.ok) {
@@ -204,7 +215,11 @@
     // Función para obtener la lista de usuarios disponibles
     async function obtenerUsuarios() {
       try {
-        const response = await fetch('http://localhost:3000/api/usuarios');
+        const response = await fetch('http://localhost:3000/api/usuarios', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const usuarios = await response.json();
         renderizarUsuarios(usuarios);
       } catch (error) {

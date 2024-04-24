@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/styles/perfiles.css">
   <link rel="stylesheet" href="/styles/admin.css">
 </head>
-<body>
+  <body>
   
 <header>
     <h1>Panel de Administrador</h1>
@@ -60,6 +60,14 @@
     const editAvatarInput = document.getElementById('editAvatar');
     const editEdadInput = document.getElementById('editEdad');
 
+
+    
+    // Obtener el ID del usuario del localStorage
+    const userId = localStorage.getItem('userId');
+    // Obtener el token de autorización del localStorage
+    const token = localStorage.getItem('token');
+
+    
     // Función para cargar los usuarios restringidos del usuario actual
     async function cargarUsuariosRestringidos(userId) {
       try {
@@ -67,7 +75,8 @@
         const response = await fetch(`http://localhost:3000/api/perfiles?userId=${userId}`, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Incluir token de autorización en las cabeceras
           }
         });
         // Convertir la respuesta a formato JSON
@@ -119,7 +128,8 @@
         const response = await fetch(`http://localhost:3000/api/perfiles/${id}`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Incluir token de autorización en las cabeceras
           },
           body: JSON.stringify({ nombreCompleto, pin, avatar, edad }) // Enviar los nuevos datos del usuario en formato JSON
         });
@@ -140,7 +150,10 @@
         try {
           // Realizar una solicitud DELETE para eliminar el usuario restringido con el ID proporcionado
           const response = await fetch(`http://localhost:3000/api/perfiles?id=${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}` // Incluir token de autorización en las cabeceras
+            }
           });
           // Convertir la respuesta a formato JSON
           const data = await response.json();
@@ -152,8 +165,6 @@
       }
     }
 
-    // Obtener el ID del usuario del localStorage
-    const userId = localStorage.getItem('userId');
     cargarUsuariosRestringidos(userId); // Cargar los usuarios restringidos al cargar la página
   </script>
 

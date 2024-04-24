@@ -43,22 +43,23 @@
   </div>
 
   <script>
-    // Obtener el ID del usuario del localStorage
     const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
 
-    // Función para cargar las playlists disponibles
     async function cargarPlaylists() {
       try {
-        // Obtener todas las playlists del usuario
-        const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`);
+        const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const playlists = await response.json();
         const playlistDropdown = document.getElementById('playlist');
 
-        // Llenar el dropdown de playlists con las opciones disponibles
         playlists.forEach(playlist => {
           const option = document.createElement('option');
           option.value = playlist._id;
-          option.textContent = playlist.name;
+          option.textContent = `${playlist.name} (${playlist.videos.length} videos)`;
           playlistDropdown.appendChild(option);
         });
       } catch (error) {
@@ -66,69 +67,56 @@
       }
     }
 
-    // Agregar un evento de escucha al formulario de creación de videos
     document.getElementById('crearVideoForm').addEventListener('submit', async (event) => {
-      event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
+      event.preventDefault();
 
-      // Obtener los valores de los campos de nombre, URL del video, playlist seleccionada y descripción
       const nombre = document.getElementById('nombre').value;
       const url = document.getElementById('url').value;
       const playlistId = document.getElementById('playlist').value;
       const descripcion = document.getElementById('descripcion').value;
 
       try {
-        // Validar que todos los campos estén llenos antes de enviar la solicitud al servidor
         if (!nombre || !url || !playlistId) {
           throw new Error('Todos los campos son requeridos.');
         }
 
-        // Validar que la URL de YouTube sea válida
         if (!isValidYoutubeUrl(url)) {
           throw new Error('Por favor, ingrese una URL de YouTube válida.');
         }
 
-        // Enviar una solicitud POST al servidor para crear un nuevo video y asociarlo a la playlist seleccionada
         const response = await fetch('http://localhost:3000/api/videos', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ name: nombre, youtubeUrl: url, userId: userId, playlistId: playlistId, descripcion: descripcion })
         });
 
-        // Verificar si la respuesta del servidor es exitosa
         if (response.ok) {
-          // Mostrar una alerta indicando que el video se creó exitosamente
           alert('Video creado y asignado a la playlist exitosamente');
-          // Limpiar el formulario después de crear el video
           document.getElementById('crearVideoForm').reset();
         } else {
-          // Mostrar un mensaje de error si la respuesta del servidor no es exitosa
           const errorMessageDiv = document.getElementById('errorMessages');
           errorMessageDiv.innerHTML = `<p>Error al crear el video: ${response.statusText}</p>`;
         }
       } catch (error) {
-        // Capturar y manejar cualquier error que ocurra durante el proceso
         console.error('Error al crear el video:', error);
-        // Mostrar el mensaje de error en caso de un error
         const errorMessageDiv = document.getElementById('errorMessages');
         errorMessageDiv.innerHTML = `<p>${error.message}</p>`;
       }
     });
 
-    // Función para redirigir al usuario a la página de edición de videos
     function irAEditar() {
       window.location.href = './editarPlaylist.html';
     }
 
-    // Función para validar una URL de YouTube
     function isValidYoutubeUrl(url) {
-      // Expresión regular para validar URLs de YouTube
       const youtubeUrlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^\s]+$/;
       return youtubeUrlPattern.test(url);
     }
 
-    cargarPlaylists(); // Cargar playlists al cargar la página
+    cargarPlaylists();
 </script>
 
 </body>

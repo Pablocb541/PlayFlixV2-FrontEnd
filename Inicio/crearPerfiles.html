@@ -53,7 +53,9 @@
   
     // Obtener el ID del usuario del localStorage
     const userId = localStorage.getItem('userId');
-  
+    
+    const token = localStorage.getItem('token');
+
     // Manejador de eventos para enviar el formulario de creación de usuario
     document.getElementById('crearUsuarioForm').addEventListener('submit', async (event) => {
       event.preventDefault(); // Evitar el comportamiento predeterminado del formulario
@@ -77,7 +79,8 @@
         const response = await fetch('http://localhost:3000/api/perfiles', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ nombreCompleto, pin, avatar, edad, userId }) // Convertir datos a formato JSON
         });

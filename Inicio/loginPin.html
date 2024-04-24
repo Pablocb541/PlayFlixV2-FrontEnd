@@ -44,7 +44,8 @@
                 const response = await fetch("http://localhost:3000/api/loginUsuarios", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem('token')}` // Incluir token de autorización en las cabeceras
                     },
                     body: JSON.stringify(data)
                 });
