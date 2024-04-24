@@ -31,6 +31,13 @@
       <form id="crearPlaylistForm">
         <label for="nombrePlaylist">Nombre de la Playlist*</label>
         <input type="text" id="nombrePlaylist" required>
+        
+        <h3>Usuarios asociados:</h3>
+        <ul id="usuariosAsociados"></ul>
+        
+        <h3>Seleccionar usuarios:</h3>
+        <ul id="listaUsuarios"></ul>
+        
         <button type="submit">Crear Playlist</button>
       </form>
     </div>
@@ -86,6 +93,9 @@
       event.preventDefault();
 
       const nombrePlaylist = document.getElementById('nombrePlaylist').value;
+      const usuariosAsociados = Array.from(document.querySelectorAll('#usuariosAsociados li'));
+
+      const usuariosIds = usuariosAsociados.map(usuario => usuario.getAttribute('data-id'));
 
       try {
         if (!nombrePlaylist) {
@@ -97,7 +107,7 @@
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ name: nombrePlaylist, associatedProfiles: [userId] }),
+          body: JSON.stringify({ name: nombrePlaylist, associatedProfiles: usuariosIds }),
         });
 
         if (response.ok) {
@@ -191,8 +201,60 @@
       }
     }
 
-    // Obtener las playlists al cargar la página
-    obtenerPlaylists();
+    // Función para obtener la lista de usuarios disponibles
+    async function obtenerUsuarios() {
+      try {
+        const response = await fetch('http://localhost:3000/api/usuarios');
+        const usuarios = await response.json();
+        renderizarUsuarios(usuarios);
+      } catch (error) {
+        console.error('Error al obtener los usuarios:', error);
+        mostrarMensajeError('Error al obtener los usuarios');
+      }
+    }
+
+    // Función para renderizar la lista de usuarios
+    function renderizarUsuarios(usuarios) {
+      const listaUsuarios = document.getElementById('listaUsuarios');
+      listaUsuarios.innerHTML = '';
+
+      usuarios.forEach(usuario => {
+        const li = document.createElement('li');
+        li.setAttribute('data-id', usuario._id);
+        li.textContent = usuario.nombre;
+
+        // Agregar evento de clic para seleccionar el usuario
+        li.addEventListener('click', () => {
+          agregarUsuarioAsociado(li);
+        });
+
+        listaUsuarios.appendChild(li);
+      });
+    }
+
+    // Función para agregar un usuario a la lista de usuarios asociados
+    function agregarUsuarioAsociado(usuario) {
+      const usuariosAsociados = document.getElementById('usuariosAsociados');
+      const usuariosAsociadosIds = Array.from(document.querySelectorAll('#usuariosAsociados li')).map(li => li.getAttribute('data-id'));
+      
+      const usuarioId = usuario.getAttribute('data-id');
+      
+      // Verificar si el usuario ya está en la lista de usuarios asociados
+      if (!usuariosAsociadosIds.includes(usuarioId)) {
+        const nuevoUsuario = usuario.cloneNode(true);
+
+        // Agregar evento de clic para quitar el usuario de la lista de usuarios asociados
+        nuevoUsuario.addEventListener('click', () => {
+          nuevoUsuario.remove();
+        });
+
+        usuariosAsociados.appendChild(nuevoUsuario);
+      }
+    }
+
+    // Obtener la lista de usuarios al cargar la página
+    obtenerUsuarios();
+    obtenerPlaylists(); // Obtener las playlists al cargar la página
   </script>
 </body>
 </html>
