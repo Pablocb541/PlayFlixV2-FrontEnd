@@ -99,7 +99,8 @@
           document.getElementById('crearVideoForm').reset();
         } else {
           const errorMessageDiv = document.getElementById('errorMessages');
-          errorMessageDiv.innerHTML = `<p>Error al crear el video: ${response.statusText}</p>`;
+          const responseData = await response.json();
+          errorMessageDiv.innerHTML = `<p>Error al crear el video: ${responseData.error}</p>`;
         }
       } catch (error) {
         console.error('Error al crear el video:', error);
