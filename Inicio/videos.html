@@ -195,16 +195,13 @@
     // Función para buscar videos
     async function searchVideos(searchText) {
       try {
-        const extractor = new YouTubeLinkExtractor('http://localhost:3000/api/playlists');
-        const playlistIds = await extractor.fetchPlaylistIds(userId);
-        const allVideos = await extractor.fetchAllVideos(playlistIds);
-
-        const filteredVideos = allVideos.filter(video => {
-          const videoName = video.name.toLowerCase();
-          const videoDescripcion = video.descripcion.toLowerCase();
-          return videoName.includes(searchText) || videoDescripcion.includes(searchText);
+        const response = await fetch(`http://localhost:3000/api/videos/search?searchText=${searchText}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
-
+        const filteredVideos = await response.json();
+        const extractor = new YouTubeLinkExtractor('http://localhost:3000/api/playlists');
         extractor.renderVideos('playlistVideos', filteredVideos);
       } catch (error) {
         console.error('Error al buscar videos:', error);
