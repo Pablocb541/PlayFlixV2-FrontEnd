@@ -60,6 +60,7 @@
       try {
         const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
@@ -195,6 +196,7 @@
           const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}`, {
             method: 'DELETE',
             headers: {
+              'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             }
           });
@@ -217,6 +219,7 @@
       try {
         const response = await fetch('http://localhost:3000/api/usuarios', {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });

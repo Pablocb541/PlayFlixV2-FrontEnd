@@ -30,6 +30,7 @@
       try {
         const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
@@ -88,6 +89,7 @@
         try {
           const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
             headers: {
+              'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             }
           });
@@ -105,6 +107,7 @@
           for (const playlistId of playlistIds) {
             const response = await fetch(`http://localhost:3000/api/playlists/${playlistId}/videos`, {
               headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
               }
             });
@@ -197,6 +200,7 @@
       try {
         const response = await fetch(`http://localhost:3000/api/videos/search?searchText=${searchText}`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });

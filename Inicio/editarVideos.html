@@ -15,7 +15,7 @@
             <ul class="navbar-list">
                 <a href="Inicio.html">Perfiles</a>
                 <a href="crearPerfiles.html">Gestión de Perfiles</a>
-                <a href="crearVideos.html">Gestión de Videos</a>
+                <a href="crearVideos.html">Gestión de Playlists</a>
                 <a href="login.html">Cerrar Sesión</a>
             </ul>
         </nav>
@@ -50,6 +50,7 @@
       try {
         const response = await fetch(`http://localhost:3000/api/playlists?userId=${userId}`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });

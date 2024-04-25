@@ -15,7 +15,7 @@
       <ul>
         <li><a href="Inicio.html">Perfiles</a></li>
         <li><a href="crearPerfiles.html">Gestión de  Perfiles</a></li>
-        <li><a href="crearVideos.html">Gestión de Videos</a></li>
+        <li><a href="crearVideos.html">Gestión de Playlists</a></li>
         <li><a href="videos.html">Ver PlayList</a></li>
         <li><a href="login.html">Cerrar Sesión</a></li>
       </ul>
@@ -38,10 +38,10 @@
       <input type="text" id="editPin" pattern="[0-9]{6}" title="El PIN debe tener exactamente 6 dígitos" required>
       <label for="editAvatar">Avatar*</label>
       <select id="editAvatar" required>
-        <option value="/img/hacker.png">Avatar 1</option>
-        <option value="/img/cat.png">Avatar 2</option>
-        <option value="/img/panda.png">Avatar 3</option>
-        <option value="/img/bear.png">Avatar 4</option>
+        <option value="../img/hacker.png">Avatar 1</option>
+        <option value="../img/cat.png">Avatar 2</option>
+        <option value="../img/panda.png">Avatar 3</option>
+        <option value="../img/bear.png">Avatar 4</option>
       </select>
       <label for="editEdad">Edad*</label>
       <input type="number" id="editEdad" required>
@@ -152,6 +152,7 @@
           const response = await fetch(`http://localhost:3000/api/perfiles?id=${id}`, {
             method: 'DELETE',
             headers: {
+              'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}` // Incluir token de autorización en las cabeceras
             }
           });
